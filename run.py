@@ -173,7 +173,7 @@ def parse_args():
 
 def main():
   args = parse_args()
-  if 'tsmixer' in args.model:
+  if 'tsmixer' or 'tsmixer_rev_in' in args.model:
     exp_id = f'{args.data}_{args.feature_type}_{args.model}_sl{args.seq_len}_pl{args.pred_len}_lr{args.learning_rate}_nt{args.norm_type}_{args.activation}_nb{args.n_block}_dp{args.dropout}_fd{args.ff_dim}'
   elif args.model == 'full_linear':
     exp_id = f'{args.data}_{args.feature_type}_{args.model}_sl{args.seq_len}_pl{args.pred_len}_lr{args.learning_rate}'
@@ -196,7 +196,7 @@ def main():
   test_data = data_loader.get_test()
 
   # train model
-  if 'tsmixer' in args.model:
+  if 'tsmixer' or 'tsmixer_rev_in' in args.model:
     build_model = getattr(models, args.model).build_model
     model = build_model(
         input_shape=(args.seq_len, data_loader.n_feature),

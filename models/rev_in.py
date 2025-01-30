@@ -31,11 +31,12 @@ class RevNorm(layers.Layer):
   def build(self, input_shape):
     if self.affine:
       self.affine_weight = self.add_weight(
-          'affine_weight', shape=input_shape[-1], initializer='ones'
+      name='affine_weight', shape=(input_shape[-1],), initializer='ones'
       )
       self.affine_bias = self.add_weight(
-          'affine_bias', shape=input_shape[-1], initializer='zeros'
+      name='affine_bias', shape=(input_shape[-1],), initializer='zeros'
       )
+
 
   def call(self, x, mode, target_slice=None):
     if mode == 'norm':

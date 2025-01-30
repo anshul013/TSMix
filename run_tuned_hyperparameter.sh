@@ -20,6 +20,9 @@ pred_len=96
 if [ $data = "ETTm2" ]
 then
     python run.py --model TSMixerRevIN --data $data --seq_len $seq_len --pred_len $pred_len --learning_rate 0.001 --n_block 2 --dropout 0.9 --ff_dim 64
+elif [ $data = "ETTh1" ]
+then 
+    python run.py --model TSMixerRevIN --data $data --seq_len $seq_len --pred_len $pred_len --learning_rate 0.0001 --n_block 6 --dropout 0.9 --ff_dim 512 
 elif [ $data = "weather" ]
 then
     python run.py --model TSMixerRevIN --data $data --seq_len $seq_len --pred_len $pred_len --learning_rate 0.0001 --n_block 4 --dropout 0.3 --ff_dim 32

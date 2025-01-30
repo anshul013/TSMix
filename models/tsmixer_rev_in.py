@@ -36,7 +36,7 @@ def build_model(
   inputs = tf.keras.Input(shape=input_shape)
   x = inputs  # [Batch, Input Length, Channel]
   rev_norm = RevNorm(axis=-2)
-  x = rev_norm(x, 'norm')
+  x = rev_norm(x, mode='norm')
   for _ in range(n_block):
     x = res_block(x, norm_type, activation, dropout, ff_dim)
 
@@ -46,5 +46,5 @@ def build_model(
   x = tf.transpose(x, perm=[0, 2, 1])  # [Batch, Channel, Input Length]
   x = layers.Dense(pred_len)(x)  # [Batch, Channel, Output Length]
   outputs = tf.transpose(x, perm=[0, 2, 1])  # [Batch, Output Length, Channel])
-  outputs = rev_norm(outputs, 'denorm', target_slice)
+  outputs = rev_norm(outputs, mode='denorm', target_slice=target_slice)
   return tf.keras.Model(inputs, outputs)

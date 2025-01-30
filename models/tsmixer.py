@@ -15,36 +15,83 @@
 
 """Implementation of TSMixer."""
 
-import tensorflow as tf
-from tensorflow.keras import layers
+# import tensorflow as tf
+# from tensorflow.keras import layers
 
+# def res_block(inputs, norm_type, activation, dropout, ff_dim):
+#   """Residual block of TSMixer."""
+
+#   norm = (
+#       layers.LayerNormalization
+#       if norm_type == 'L'
+#       else layers.BatchNormalization
+#   )
+
+#   # Temporal Linear
+#   x = norm(axis=[-2, -1])(inputs)
+#   x = tf.transpose(x, perm=[0, 2, 1])  # [Batch, Channel, Input Length]
+#   x = layers.Dense(x.shape[-1], activation=activation)(x)
+#   x = tf.transpose(x, perm=[0, 2, 1])  # [Batch, Input Length, Channel]
+#   x = layers.Dropout(dropout)(x)
+#   res = x + inputs
+
+#   # Feature Linear
+#   x = norm(axis=[-2, -1])(res)
+#   x = layers.Dense(ff_dim, activation=activation)(
+#       x
+#   )  # [Batch, Input Length, FF_Dim]
+#   x = layers.Dropout(dropout)(x)
+#   x = layers.Dense(inputs.shape[-1])(x)  # [Batch, Input Length, Channel]
+#   x = layers.Dropout(dropout)(x)
+#   return x + res
+
+import tensorflow as tf
+import keras.layers as layers
 
 def res_block(inputs, norm_type, activation, dropout, ff_dim):
-  """Residual block of TSMixer."""
+    """Residual block of TSMixer with correct normalization strategy.
 
-  norm = (
-      layers.LayerNormalization
-      if norm_type == 'L'
-      else layers.BatchNormalization
-  )
+    Args:
+        inputs (tf.Tensor): Input tensor of shape [batch_size, seq_len, channels].
+        norm_type (str): 'L' for LayerNorm, 'B' for BatchNorm.
+        activation (str): Activation function (e.g., 'relu', 'gelu').
+        dropout (float): Dropout rate.
+        ff_dim (int): Feature expansion dimension.
 
-  # Temporal Linear
-  x = norm(axis=[-2, -1])(inputs)
-  x = tf.transpose(x, perm=[0, 2, 1])  # [Batch, Channel, Input Length]
-  x = layers.Dense(x.shape[-1], activation=activation)(x)
-  x = tf.transpose(x, perm=[0, 2, 1])  # [Batch, Input Length, Channel]
-  x = layers.Dropout(dropout)(x)
-  res = x + inputs
+    Returns:
+        tf.Tensor: Output tensor of shape [batch_size, seq_len, channels].
+    """
 
-  # Feature Linear
-  x = norm(axis=[-2, -1])(res)
-  x = layers.Dense(ff_dim, activation=activation)(
-      x
-  )  # [Batch, Input Length, FF_Dim]
-  x = layers.Dropout(dropout)(x)
-  x = layers.Dense(inputs.shape[-1])(x)  # [Batch, Input Length, Channel]
-  x = layers.Dropout(dropout)(x)
-  return x + res
+    # Select normalization type
+    norm = layers.LayerNormalization if norm_type == 'L' else layers.BatchNormalization
+
+    # 1️⃣ **Temporal Mixing Block** (Normalize over time)
+    if norm_type == 'L':
+        x = norm(axis=-1)(inputs)  # LayerNorm across features (channels)
+    else:
+        x = norm(axis=1)(inputs)  # BatchNorm across time (seq_len)
+
+    x = tf.transpose(x, perm=[0, 2, 1])  # Shape: [Batch, Channels, Seq_Len]
+    x = layers.Dense(x.shape[-1], activation=activation)(x)  # Temporal Mixing
+    x = tf.transpose(x, perm=[0, 2, 1])  # Shape: [Batch, Seq_Len, Channels]
+    x = layers.Dropout(dropout)(x)
+
+    # Residual connection for temporal mixing
+    res = x + inputs
+
+    # 2️⃣ **Feature Mixing Block** (Normalize over features)
+    if norm_type == 'L':
+        x = norm(axis=-1)(res)  # LayerNorm across features (channels)
+    else:
+        x = norm(axis=-1)(res)  # BatchNorm across features (channels)
+
+    x = layers.Dense(ff_dim, activation=activation)(x)  # Expand feature dimension
+    x = layers.Dropout(dropout)(x)
+    x = layers.Dense(inputs.shape[-1])(x)  # Project back to original feature dim
+    x = layers.Dropout(dropout)(x)
+
+    # Residual connection for feature mixing
+    return x + res
 
 
 def build_model(

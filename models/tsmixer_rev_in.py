@@ -42,9 +42,8 @@ def build_model(
 
   if target_slice:
     x = x[:, :, target_slice]
-
-  x = tf.transpose(x, perm=[0, 2, 1])  # [Batch, Channel, Input Length]
+  x = layers.Lambda(lambda t: tf.transpose(t, perm=[0, 2, 1]))(x) # [Batch, Channel, Input Length]
   x = layers.Dense(pred_len)(x)  # [Batch, Channel, Output Length]
-  outputs = tf.transpose(x, perm=[0, 2, 1])  # [Batch, Output Length, Channel])
+  outputs = layers.Lambda(lambda t: tf.transpose(t, perm=[0, 2, 1]))(x) # [Batch, Output Length, Channel])
   outputs = rev_norm(outputs, mode='denorm', target_slice=target_slice)
   return tf.keras.Model(inputs, outputs)

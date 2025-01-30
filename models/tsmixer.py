@@ -47,6 +47,7 @@
 
 import tensorflow as tf
 import keras.layers as layers
+import keras
 
 def res_block(inputs, norm_type, activation, dropout, ff_dim):
     """Residual block of TSMixer with correct normalization strategy.
@@ -71,9 +72,10 @@ def res_block(inputs, norm_type, activation, dropout, ff_dim):
     else:
         x = norm(axis=1)(inputs)  # BatchNorm across time (seq_len)
 
-    x = tf.transpose(x, perm=[0, 2, 1])  # Shape: [Batch, Channels, Seq_Len]
+    # Replaced tf.transpose() with a Keras Lambda layer
+    x = layers.Lambda(lambda t: tf.transpose(t, perm=[0, 2, 1]))(x)  # Shape: [Batch, Channels, Seq_Len]
     x = layers.Dense(x.shape[-1], activation=activation)(x)  # Temporal Mixing
-    x = tf.transpose(x, perm=[0, 2, 1])  # Shape: [Batch, Seq_Len, Channels]
+    x = layers.Lambda(lambda t: tf.transpose(t, perm=[0, 2, 1]))(x)  # Shape: [Batch, Seq_Len, Channels]
     x = layers.Dropout(dropout)(x)
 
     # Residual connection for temporal mixing
@@ -92,7 +94,6 @@ def res_block(inputs, norm_type, activation, dropout, ff_dim):
 
     # Residual connection for feature mixing
     return x + res
-
 
 def build_model(
     input_shape,

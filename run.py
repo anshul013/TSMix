@@ -224,7 +224,7 @@ def main():
 
   optimizer = tf.keras.optimizers.Adam(learning_rate=args.learning_rate)
   model.compile(optimizer=optimizer, loss='mse', metrics=['mae'])
-  checkpoint_path = os.path.join(args.checkpoint_dir, f'{exp_id}_best')
+  checkpoint_path = os.path.join(args.checkpoint_dir, f'{exp_id}_best.weights.h5')
   checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
       filepath=checkpoint_path,
       verbose=1,

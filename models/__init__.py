@@ -19,3 +19,5 @@ import models.cnn
 import models.full_linear
 import models.tsmixer
 import models.tsmixer_rev_in
+import models.tsmixer_rev_in_torch
+import models.tsmixer_torch
